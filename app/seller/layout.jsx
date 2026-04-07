@@ -3,7 +3,6 @@
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-
 import Navbar from '@/components/seller/Navbar'
 import Sidebar from '@/components/seller/Sidebar'
 
