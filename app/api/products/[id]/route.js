@@ -13,7 +13,8 @@ export async function DELETE(req, { params }) {
 
     await dbConnect();
 
-    await Product.findByIdAndDelete(params.id);
+    const { id } = await params;
+    await Product.findByIdAndDelete(id);
 
     return Response.json({ success: true });
 
