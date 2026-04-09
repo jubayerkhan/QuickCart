@@ -65,3 +65,16 @@ export async function POST(req) {
     return new Response("Error", { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    await dbConnect();
+
+    const products = await Product.find().sort({ createdAt: -1 });
+
+    return Response.json({ success: true, products });
+
+  } catch (error) {
+    return new Response("Error", { status: 500 });
+  }
+}

@@ -22,8 +22,14 @@ const productSchema = new mongoose.Schema({
     required: true,
   },
   images: {
-    type: [String], // later for Cloudinary URLs
+    type: [String], // Cloudinary URLs - max 4 images
     default: [],
+    validate: {
+      validator: function(arr) {
+        return arr.length <= 4;
+      },
+      message: 'Maximum 4 images allowed per product'
+    }
   },
   createdAt: {
     type: Date,
