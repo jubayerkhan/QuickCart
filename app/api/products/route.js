@@ -75,6 +75,6 @@ export async function GET() {
     return Response.json({ success: true, products });
 
   } catch (error) {
-    return new Response("Error", { status: 500 });
+    return Response.json({ success: false, message: error.message }, { status: 500 });
   }
 }
