@@ -10,6 +10,33 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+export async function GET(req, { params }) {
+  try {
+    await dbConnect();
+
+    const { id } = await params;
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return Response.json(
+        { success: false, message: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    return Response.json({ success: true, product });
+
+  } catch (error) {
+    console.log("GET BY ID ERROR:", error);
+
+    return Response.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
+  }
+}
+
 export async function DELETE(req, { params }) {
   try {
     const { sessionClaims } = await auth();
@@ -18,7 +45,7 @@ export async function DELETE(req, { params }) {
     if (role !== "seller" && role !== "admin") {
       return Response.json(
         { success: false, message: "Unauthorized" },
-        { status: 403 }
+        { status: 403 },
       );
     }
 
@@ -32,7 +59,7 @@ export async function DELETE(req, { params }) {
     if (!product) {
       return Response.json(
         { success: false, message: "Product not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -48,13 +75,12 @@ export async function DELETE(req, { params }) {
     await Product.findByIdAndDelete(id);
 
     return Response.json({ success: true });
-
   } catch (error) {
     console.log("DELETE ERROR:", error);
 
     return Response.json(
       { success: false, message: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

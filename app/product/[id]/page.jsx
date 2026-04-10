@@ -18,14 +18,29 @@ const Product = () => {
   const [mainImage, setMainImage] = useState(null);
   const [productData, setProductData] = useState(null);
 
+  // const fetchProductData = async () => {
+  //   const product = products.find((product) => product._id === id);
+  //   setProductData(product);
+  // };
   const fetchProductData = async () => {
-    const product = products.find((product) => product._id === id);
-    setProductData(product);
+    try {
+      const res = await fetch(`/api/products/${id}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setProductData(data.product);
+        setMainImage(data.product.images?.[0]?.url);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {
-    fetchProductData();
-  }, [id, products.length]);
+    if (id) {
+      fetchProductData();
+    }
+  }, [id]);
 
   return productData ? (
     <>
@@ -35,7 +50,7 @@ const Product = () => {
           <div className="px-5 lg:px-16 xl:px-20">
             <div className="rounded-lg overflow-hidden bg-gray-500/10 mb-4">
               <Image
-                src={mainImage || productData.images[0]}
+                src={mainImage || productData.images?.[0]?.url}
                 alt="alt"
                 className="w-full h-auto object-cover mix-blend-multiply"
                 width={1280}
@@ -47,11 +62,12 @@ const Product = () => {
               {productData.images.map((image, index) => (
                 <div
                   key={index}
-                  onClick={() => setMainImage(image)}
+                  onClick={() => setMainImage(image.url)}
                   className="cursor-pointer rounded-lg overflow-hidden bg-gray-500/10"
                 >
                   <Image
-                    src={image}
+                    key={index}
+                    src={image.url}
                     alt="alt"
                     className="w-full h-auto object-cover mix-blend-multiply"
                     width={1280}
