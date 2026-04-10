@@ -28,23 +28,28 @@ const ProductList = () => {
   };
 
   const handleDelete = async (id) => {
-    const confirmDelete = confirm("Are you sure?");
-    if (!confirmDelete) return;
+  const confirmDelete = confirm("Are you sure?");
+  if (!confirmDelete) return;
 
-    try {
-      const res = await fetch(`/api/products/${id}`, {
-        method: "DELETE",
-      });
+  try {
+    const res = await fetch(`/api/products/${id}`, {
+      method: "DELETE",
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      if (data.success) {
-        setProducts(products.filter((p) => p._id !== id));
-      }
-    } catch (error) {
-      console.log(error);
+    if (!res.ok) {
+      alert(data.message || "Delete failed ❌");
+      return;
     }
-  };
+
+    setProducts((prev) => prev.filter((p) => p._id !== id));
+    // alert("Deleted successfully ✅");
+
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   useEffect(() => {
     fetchSellerProduct();
@@ -85,7 +90,7 @@ const ProductList = () => {
                     <td className="md:px-4 pl-2 md:pl-4 py-3 flex items-center space-x-3 truncate">
                       <div className="bg-gray-500/10 rounded p-2">
                         <Image
-                          src={product.images[0] || parcel_icon}
+                          src={product.images[0]?.url || parcel_icon}
                           alt="product Image"
                           className="w-16"
                           width={1280}

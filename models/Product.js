@@ -22,7 +22,10 @@ const productSchema = new mongoose.Schema({
     required: true,
   },
   images: {
-    type: [String], // Cloudinary URLs - max 4 images
+    type: [{
+      url: String,
+      public_id: String,
+    }], // Cloudinary URLs - max 4 images
     default: [],
     validate: {
       validator: function(arr) {

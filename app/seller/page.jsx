@@ -12,37 +12,53 @@ const AddProduct = () => {
   const [offerPrice, setOfferPrice] = useState("");
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    const formData = new FormData();
+  if (files.length === 0 || files.every(f => !f)) {
+    alert("Please upload at least one image ❌");
+    return;
+  }
 
-    formData.append("name", name);
-    formData.append("description", description);
-    formData.append("category", category);
-    formData.append("price", price);
-    formData.append("offerPrice", offerPrice);
+  const formData = new FormData();
 
-    files.forEach((file) => {
-      if (file) {
-        formData.append("images", file);
-      }
+  formData.append("name", name);
+  formData.append("description", description);
+  formData.append("category", category);
+  formData.append("price", price);
+  formData.append("offerPrice", offerPrice);
+
+  files.forEach((file) => {
+    if (file) {
+      formData.append("images", file);
+    }
+  });
+
+  try {
+    const res = await fetch("/api/products", {
+      method: "POST",
+      body: formData,
     });
 
-    try {
-      const res = await fetch("/api/products", {
-        method: "POST",
-        body: formData,
-      });
+    const data = await res.json();
 
-      const data = await res.json();
-
-      if (data.success) {
-        alert("Product added ✅");
-      }
-    } catch (error) {
-      console.log(error);
+    if (!res.ok) {
+      alert(data.message || "Upload failed ❌");
+      return;
     }
-  };
+
+    alert("Product added ✅");
+
+    setName("");
+    setDescription("");
+    setCategory("Earphone");
+    setPrice("");
+    setOfferPrice("");
+    setFiles([]);
+
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   return (
     <div className="flex-1 min-h-screen flex flex-col justify-between">

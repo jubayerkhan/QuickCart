@@ -16,7 +16,7 @@ export async function POST(req) {
     const role = sessionClaims?.publicMetadata?.role;
 
     if (role !== "seller" && role !== "admin") {
-      return new Response("Unauthorized", { status: 403 });
+      return Response.json({ success: false, message: "Unauthorized" }, { status: 403 });
     }
 
     await dbConnect();
@@ -31,10 +31,11 @@ export async function POST(req) {
 
     const files = formData.getAll("images");
 
-    // 🔥 Upload images to Cloudinary
     const imageUrls = [];
 
     for (const file of files) {
+      if (!file || file.size === 0) continue; // ✅ important fix
+
       const bytes = await file.arrayBuffer();
       const buffer = Buffer.from(bytes);
 
@@ -45,10 +46,12 @@ export async function POST(req) {
         }).end(buffer);
       });
 
-      imageUrls.push(uploadResult.secure_url);
+      imageUrls.push({
+        url: uploadResult.secure_url,
+        public_id: uploadResult.public_id,
+      });
     }
 
-    // 💾 Save to DB
     const product = await Product.create({
       name,
       description,
@@ -61,8 +64,12 @@ export async function POST(req) {
     return Response.json({ success: true, product });
 
   } catch (error) {
-    console.log(error);
-    return new Response("Error", { status: 500 });
+    console.log("POST ERROR:", error);
+
+    return Response.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }
 
@@ -73,8 +80,10 @@ export async function GET() {
     const products = await Product.find().sort({ createdAt: -1 });
 
     return Response.json({ success: true, products });
-
   } catch (error) {
-    return Response.json({ success: false, message: error.message }, { status: 500 });
+    return Response.json(
+      { success: false, message: error.message },
+      { status: 500 },
+    );
   }
 }

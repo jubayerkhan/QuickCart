@@ -1,6 +1,14 @@
 import dbConnect from "@/config/db";
 import Product from "@/models/Product";
 import { auth } from "@clerk/nextjs/server";
+import { v2 as cloudinary } from "cloudinary";
+
+// config cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function DELETE(req, { params }) {
   try {
@@ -8,17 +16,45 @@ export async function DELETE(req, { params }) {
     const role = sessionClaims?.publicMetadata?.role;
 
     if (role !== "seller" && role !== "admin") {
-      return new Response("Unauthorized", { status: 403 });
+      return Response.json(
+        { success: false, message: "Unauthorized" },
+        { status: 403 }
+      );
     }
 
     await dbConnect();
 
+    // FIX HERE
     const { id } = await params;
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return Response.json(
+        { success: false, message: "Product not found" },
+        { status: 404 }
+      );
+    }
+
+    // delete images from Cloudinary
+    for (const img of product.images) {
+      if (typeof img === "string") continue;
+
+      if (img.public_id) {
+        await cloudinary.uploader.destroy(img.public_id);
+      }
+    }
+
     await Product.findByIdAndDelete(id);
 
     return Response.json({ success: true });
 
   } catch (error) {
-    return new Response("Error", { status: 500 });
+    console.log("DELETE ERROR:", error);
+
+    return Response.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
   }
 }
