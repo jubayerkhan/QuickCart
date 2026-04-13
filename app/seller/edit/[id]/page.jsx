@@ -53,7 +53,7 @@ const AddProduct = () => {
         return;
       }
 
-      alert("Product added ✅");
+      alert("Product Updated ✅");
 
       setName("");
       setDescription("");
