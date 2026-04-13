@@ -44,7 +44,7 @@ const ProductList = () => {
     }
 
     setProducts((prev) => prev.filter((p) => p._id !== id));
-    // alert("Deleted successfully ✅");
+    alert("Deleted successfully ✅");
 
   } catch (error) {
     console.log(error);
