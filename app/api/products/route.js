@@ -16,7 +16,10 @@ export async function POST(req) {
     const role = sessionClaims?.publicMetadata?.role;
 
     if (role !== "seller" && role !== "admin") {
-      return Response.json({ success: false, message: "Unauthorized" }, { status: 403 });
+      return Response.json(
+        { success: false, message: "Unauthorized" },
+        { status: 403 },
+      );
     }
 
     await dbConnect();
@@ -40,10 +43,12 @@ export async function POST(req) {
       const buffer = Buffer.from(bytes);
 
       const uploadResult = await new Promise((resolve, reject) => {
-        cloudinary.uploader.upload_stream({}, (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }).end(buffer);
+        cloudinary.uploader
+          .upload_stream({}, (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          })
+          .end(buffer);
       });
 
       imageUrls.push({
@@ -62,24 +67,39 @@ export async function POST(req) {
     });
 
     return Response.json({ success: true, product });
-
   } catch (error) {
     console.log("POST ERROR:", error);
 
     return Response.json(
       { success: false, message: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
-export async function GET() {
+export async function GET(req) {
   try {
     await dbConnect();
 
-    const products = await Product.find().sort({ createdAt: -1 });
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 10;
+    const skip = (page - 1) * limit;
 
-    return Response.json({ success: true, products });
+    const total = await Product.countDocuments();
+
+    const products = await Product.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    return Response.json({
+      success: true,
+      products,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    });
   } catch (error) {
     return Response.json(
       { success: false, message: error.message },
