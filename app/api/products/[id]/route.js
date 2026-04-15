@@ -52,6 +52,7 @@ export async function PUT(req, { params }) {
 
     const { id } = await params;
 
+    // formData is a web API, not supported in Node by default
     const formData = await req.formData();
 
     const name = formData.get("name");
