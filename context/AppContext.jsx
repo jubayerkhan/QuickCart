@@ -37,10 +37,6 @@ export const AppContextProvider = (props) => {
     }
   };
 
-  useEffect(() => {
-    fetchProductData();
-  }, []);
-
   const fetchUserData = async () => {
     setUserData(userDummyData);
   };
