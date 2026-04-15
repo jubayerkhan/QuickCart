@@ -20,10 +20,26 @@ export const AppContextProvider = (props) => {
   const [userData, setUserData] = useState(false);
   const [isSeller, setIsSeller] = useState(true);
   const [cartItems, setCartItems] = useState({});
+  const [loading, setLoading] = useState(true);
 
   const fetchProductData = async () => {
-    setProducts(productsDummyData);
+    try {
+      const res = await fetch("/api/products");
+      const data = await res.json();
+
+      if (data.success) {
+        setProducts(data.products);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchProductData();
+  }, []);
 
   const fetchUserData = async () => {
     setUserData(userDummyData);
