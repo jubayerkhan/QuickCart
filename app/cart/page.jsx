@@ -15,7 +15,10 @@ const Cart = () => {
     updateCartQuantity,
     getCartCount,
   } = useAppContext();
-
+  // console.log(getCartCount());
+  // console.log(cartItems);
+  // console.log(products);
+  // localStorage.removeItem("cart");
   return (
     <>
       <Navbar />
@@ -50,7 +53,7 @@ const Cart = () => {
               <tbody>
                 {Object.keys(cartItems).map((itemId) => {
                   const product = products.find(
-                    (product) => product._id === itemId,
+                    (product) => product._id.toString() === itemId.toString(),
                   );
 
                   if (!product || cartItems[itemId] <= 0) return null;
