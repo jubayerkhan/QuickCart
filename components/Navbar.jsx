@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { assets, BoxIcon, CartIcon, HomeIcon } from "@/assets/assets";
+import cart_nav from "../assets/cart_nav.png";
 import Link from "next/link";
 import { useAppContext } from "@/context/AppContext";
 import Image from "next/image";
@@ -44,6 +45,7 @@ const Navbar = () => {
 
       <ul className="hidden md:flex items-center gap-4 ">
         <Image className="w-4 h-4" src={assets.search_icon} alt="search icon" />
+        <Image className="w-6 h-5" src={cart_nav} alt="cart_nav" />
         {user ? (
           <>
             <UserButton>
@@ -117,13 +119,15 @@ const Navbar = () => {
             </UserButton>
           </>
         ) : (
-          <button
-            onClick={openSignIn}
-            className="flex items-center gap-2 hover:text-gray-900 transition"
-          >
-            <Image src={assets.user_icon} alt="user icon" />
-            Account
-          </button>
+          <div>
+            <button
+              onClick={openSignIn}
+              className="flex items-center gap-2 hover:text-gray-900 transition"
+            >
+              <Image src={assets.user_icon} alt="user icon" />
+              Account
+            </button>
+          </div>
         )}
       </div>
     </nav>

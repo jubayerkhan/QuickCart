@@ -75,6 +75,7 @@ export const AppContextProvider = (props) => {
     let totalAmount = 0;
     for (const items in cartItems) {
       let itemInfo = products.find((product) => product._id === items);
+      if (!itemInfo) continue;
       if (cartItems[items] > 0) {
         totalAmount += itemInfo.offerPrice * cartItems[items];
       }
@@ -89,6 +90,19 @@ export const AppContextProvider = (props) => {
   useEffect(() => {
     fetchUserData();
   }, []);
+
+  // to add item to cart, we need to save the cart in local storage, so that when user come back to the site, they can see their cart items
+  useEffect(() => {
+    const saveCart = localStorage.getItem("cart");
+
+    if (saveCart) {
+      setCartItems(JSON.parse(saveCart));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cartItems));
+  }, [cartItems]);
 
   const value = {
     user,
