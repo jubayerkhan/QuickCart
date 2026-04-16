@@ -28,28 +28,27 @@ const ProductList = () => {
   };
 
   const handleDelete = async (id) => {
-  const confirmDelete = confirm("Are you sure?");
-  if (!confirmDelete) return;
+    const confirmDelete = confirm("Are you sure?");
+    if (!confirmDelete) return;
 
-  try {
-    const res = await fetch(`/api/products/${id}`, {
-      method: "DELETE",
-    });
+    try {
+      const res = await fetch(`/api/products/${id}`, {
+        method: "DELETE",
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      alert(data.message || "Delete failed ❌");
-      return;
+      if (!res.ok) {
+        alert(data.message || "Delete failed ❌");
+        return;
+      }
+
+      setProducts((prev) => prev.filter((p) => p._id !== id));
+      alert("Deleted successfully ✅");
+    } catch (error) {
+      console.log(error);
     }
-
-    setProducts((prev) => prev.filter((p) => p._id !== id));
-    alert("Deleted successfully ✅");
-
-  } catch (error) {
-    console.log(error);
-  }
-};
+  };
 
   useEffect(() => {
     fetchSellerProduct();
@@ -118,7 +117,9 @@ const ProductList = () => {
                     </td>
                     <td className="px-4 py-3 max-sm:hidden">
                       <button
-                        onClick={() => router.push(`/seller/edit/${product._id}`)}
+                        onClick={() =>
+                          router.push(`/seller/edit/${product._id}`)
+                        }
                         className="flex items-center gap-1 px-1.5 md:px-3.5 py-2 bg-orange-600 text-white rounded-md"
                       >
                         <span className="hidden md:block">Edit</span>
@@ -130,8 +131,10 @@ const ProductList = () => {
                       </button>
                     </td>
                     <td className="px-4 py-3 max-sm:hidden">
-                      <button className="flex items-center gap-1 px-1.5 md:px-3.5 py-2 bg-orange-600 text-white rounded-md"
-                      onClick={() => handleDelete(product._id)}>
+                      <button
+                        className="flex items-center gap-1 px-1.5 md:px-3.5 py-2 bg-orange-600 text-white rounded-md"
+                        onClick={() => handleDelete(product._id)}
+                      >
                         <span className="hidden md:block">Delete</span>
                       </button>
                     </td>

@@ -44,35 +44,37 @@ const AllProducts = () => {
           ))}
         </div>
         {/* ✅ Pagination */}
-        <div className="flex justify-center gap-2 mt-10 mx-auto">
-          <button
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="px-4 py-2 border rounded disabled:opacity-50"
-          >
-            Prev
-          </button>
-
-          {[...Array(totalPages)].map((_, i) => (
+        {totalPages > 1 && (
+          <div className="flex justify-center gap-2 mt-10 mx-auto">
             <button
-              key={i}
-              onClick={() => setPage(i + 1)}
-              className={`px-4 py-2 border rounded ${
-                page === i + 1 ? "bg-orange-500 text-white" : ""
-              }`}
+              disabled={page === 1}
+              onClick={() => setPage(page - 1)}
+              className="px-4 py-2 border rounded disabled:opacity-50"
             >
-              {i + 1}
+              Prev
             </button>
-          ))}
 
-          <button
-            disabled={page === totalPages}
-            onClick={() => setPage(page + 1)}
-            className="px-4 py-2 border rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
+            {[...Array(totalPages)].map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setPage(i + 1)}
+                className={`px-4 py-2 border rounded ${
+                  page === i + 1 ? "bg-orange-500 text-white" : ""
+                }`}
+              >
+                {i + 1}
+              </button>
+            ))}
+
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage(page + 1)}
+              className="px-4 py-2 border rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
       </div>
       <Footer />
     </>
