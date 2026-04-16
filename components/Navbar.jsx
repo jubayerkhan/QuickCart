@@ -8,7 +8,7 @@ import Image from "next/image";
 import { useClerk, UserButton } from "@clerk/nextjs";
 
 const Navbar = () => {
-  const { isSeller, router, user } = useAppContext();
+  const { isSeller, router, user, cartCount, cartItems, getCartCount } = useAppContext();
   const { openSignIn } = useClerk();
 
   return (
@@ -45,7 +45,14 @@ const Navbar = () => {
 
       <ul className="hidden md:flex items-center gap-4 ">
         <Image className="w-4 h-4" src={assets.search_icon} alt="search icon" />
-        <Image className="w-6 h-5" src={cart_nav} alt="cart_nav" />
+        <Link href="/cart" className="relative">
+          <Image className="w-8 h-6" src={cart_nav} alt="cart_nav" />
+          {user && getCartCount() > 0 && (
+            <span className="absolute -top-2 -right-3 bg-orange-600 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+              {getCartCount() > 9 ? "9+" : getCartCount()}
+            </span>
+          )}
+        </Link>
         {user ? (
           <>
             <UserButton>
