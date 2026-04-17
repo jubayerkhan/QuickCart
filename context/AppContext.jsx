@@ -93,6 +93,12 @@ export const AppContextProvider = (props) => {
     fetchUserData();
   }, []);
 
+  useEffect(() => {
+    if (user) {
+      fetch("/api/user", { method: "POST" });
+    }
+  }, [user]);
+
   // to add item to cart, we need to save the cart in local storage, so that when user come back to the site, they can see their cart items
   useEffect(() => {
     const saveCart = localStorage.getItem("cart");
