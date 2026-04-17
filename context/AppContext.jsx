@@ -42,24 +42,72 @@ export const AppContextProvider = (props) => {
     setUserData(userDummyData);
   };
 
+  const fetchCart = async () => {
+    const res = await fetch("/api/cart");
+    const data = await res.json();
+
+    const formattedCart = {};
+
+    data.cart.items.forEach((item) => {
+      formattedCart[item.productId] = item.quantity;
+    });
+
+    setCartItems(formattedCart);
+  };
+
   const addToCart = async (itemId) => {
     let cartData = structuredClone(cartItems);
+
     if (cartData[itemId]) {
       cartData[itemId] += 1;
     } else {
       cartData[itemId] = 1;
     }
+
     setCartItems(cartData);
     toast.success("Item added to cart");
+
+    await fetch("/api/cart", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ productId: itemId }),
+    });
+
+    fetchCart();
   };
 
   const updateCartQuantity = async (itemId, quantity) => {
     let cartData = structuredClone(cartItems);
+
     if (quantity === 0) {
       delete cartData[itemId];
+
+      // 🔥 DELETE from DB
+      await fetch("/api/cart", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ productId: itemId }),
+      });
     } else {
       cartData[itemId] = quantity;
+
+      // 🔥 UPDATE in DB
+      await fetch("/api/cart", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: itemId,
+          quantity,
+        }),
+      });
     }
+
     setCartItems(cartData);
   };
 
@@ -100,17 +148,17 @@ export const AppContextProvider = (props) => {
   }, [user]);
 
   // to add item to cart, we need to save the cart in local storage, so that when user come back to the site, they can see their cart items
-  useEffect(() => {
-    const saveCart = localStorage.getItem("cart");
+  // useEffect(() => {
+  //   const saveCart = localStorage.getItem("cart");
 
-    if (saveCart) {
-      setCartItems(JSON.parse(saveCart));
-    }
-  }, []);
+  //   if (saveCart) {
+  //     setCartItems(JSON.parse(saveCart));
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(cartItems));
-  }, [cartItems]);
+  // useEffect(() => {
+  //   localStorage.setItem("cart", JSON.stringify(cartItems));
+  // }, [cartItems]);
 
   const value = {
     user,

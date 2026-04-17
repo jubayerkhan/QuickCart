@@ -3,12 +3,15 @@ import mongoose from "mongoose";
 const userSchema = new mongoose.Schema(
   {
     clerkUserId: { type: String, required: true, unique: true },
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    // role: { type: String, enum: ["buyer", "seller"], default: "buyer" },
+    email: String,
+    name: String,
+    role: {
+      type: String,
+      enum: ["user", "admin", "seller"],
+      default: "user",
+    },
   },
-  { timestamps: true
-  }
+  { timestamps: true },
 );
 
-export default mongoose.model.User || mongoose.model("User", userSchema);
+export default mongoose.models.User || mongoose.model("User", userSchema);
