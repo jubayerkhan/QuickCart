@@ -6,11 +6,21 @@ const OrderSummary = () => {
   const { currency, router, getCartCount, getCartAmount } = useAppContext();
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
 
   const [userAddresses, setUserAddresses] = useState([]);
 
   const fetchUserAddresses = async () => {
-    setUserAddresses(addressDummyData);
+    try {
+      const res = await fetch("/api/address");
+      const data = await res.json();
+
+      if (data.success) {
+        setUserAddresses(data.addresses);
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const handleAddressSelect = (address) => {
@@ -23,6 +33,12 @@ const OrderSummary = () => {
   useEffect(() => {
     fetchUserAddresses();
   }, []);
+
+  useEffect(() => {
+    if (userAddresses.length > 0) {
+      setSelectedAddress(userAddresses[0]);
+    }
+  }, [userAddresses]);
 
   return (
     <div className="w-full md:w-96 bg-gray-500/5 p-5">
@@ -66,11 +82,51 @@ const OrderSummary = () => {
                 {userAddresses.map((address, index) => (
                   <li
                     key={index}
-                    className="px-4 py-2 hover:bg-gray-500/10 cursor-pointer"
+                    className="px-4 py-2 hover:bg-gray-500/10 cursor-pointer flex justify-between items-center"
                     onClick={() => handleAddressSelect(address)}
                   >
-                    {address.fullName}, {address.area}, {address.city},{" "}
-                    {address.state}
+                    <span>
+                      {address.fullName}, {address.area}, {address.city},{" "}
+                      {address.state}
+                    </span>
+                    <div className="flex gap-4">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // prevent li click
+                          router.push(`/add-address?id=${address._id}`);
+                        }}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const res = await fetch("/api/address", {
+                              method: "DELETE",
+                              headers: {
+                                "Content-Type": "application/json",
+                              },
+                              body: JSON.stringify({ _id: address._id }),
+                            });
+
+                            const data = await res.json();
+
+                            if (data.success) {
+                              alert("Address deleted");
+
+                              // 🔥 remove from UI instantly
+                              setUserAddresses((prev) =>
+                                prev.filter((item) => item._id !== address._id),
+                              );
+                            }
+                          } catch (error) {
+                            console.log(error);
+                          }
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </li>
                 ))}
                 <li

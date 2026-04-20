@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { assets, productsDummyData } from "@/assets/assets";
+import { assets, } from "@/assets/assets";
 import Image from "next/image";
 import parcel_icon from "@/assets/parcel_icon.svg";
 import { useAppContext } from "@/context/AppContext";
