@@ -2,8 +2,9 @@
 import { productsDummyData, userDummyData } from "@/assets/assets";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, use, useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useAuth } from "@clerk/nextjs";
 
 export const AppContext = createContext();
 
@@ -22,6 +23,7 @@ export const AppContextProvider = (props) => {
   const [isSeller, setIsSeller] = useState(true);
   const [cartItems, setCartItems] = useState({});
   const [loading, setLoading] = useState(true);
+  const { isSignedIn, isLoaded } = useAuth();
 
   const fetchProductData = async () => {
     try {
@@ -146,6 +148,11 @@ export const AppContextProvider = (props) => {
       fetch("/api/user", { method: "POST" });
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!isLoaded && !isSignedIn) return;
+    fetchCart();
+  }, [isSignedIn, isLoaded]);
 
   // to add item to cart, we need to save the cart in local storage, so that when user come back to the site, they can see their cart items
   // useEffect(() => {

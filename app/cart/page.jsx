@@ -19,6 +19,18 @@ const Cart = () => {
   // console.log(cartItems);
   // console.log(products);
   // localStorage.removeItem("cart");
+
+  // At the top of Cart component, before the return
+  if (!products.length) {
+    return (
+      <>
+        <Navbar />
+        <div className="flex justify-center items-center h-64">
+          <p className="text-gray-400">Loading cart...</p>
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <Navbar />
