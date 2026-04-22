@@ -8,7 +8,8 @@ export async function GET() {
   try {
     await dbConnect();
     const { userId } = await auth();
-    if (!userId) return Response.json({ success: false, message: "Unauthorized" });
+    if (!userId)
+      return Response.json({ success: false, message: "Unauthorized" });
 
     const orders = await Order.find({}).sort({ createdAt: -1 }).lean();
 
@@ -20,10 +21,10 @@ export async function GET() {
               .select("name images")
               .lean();
             return { ...item, product };
-          })
+          }),
         );
         return { ...order, items };
-      })
+      }),
     );
 
     return Response.json({ success: true, orders: enriched });
@@ -37,17 +38,19 @@ export async function PUT(req) {
   try {
     await dbConnect();
     const { userId } = await auth();
-    if (!userId) return Response.json({ success: false, message: "Unauthorized" });
+    if (!userId)
+      return Response.json({ success: false, message: "Unauthorized" });
 
     const { orderId, status } = await req.json();
 
     const order = await Order.findByIdAndUpdate(
       orderId,
       { status },
-      { new: true }
+      { new: true },
     );
 
-    if (!order) return Response.json({ success: false, message: "Order not found" });
+    if (!order)
+      return Response.json({ success: false, message: "Order not found" });
 
     return Response.json({ success: true, order });
   } catch (error) {
