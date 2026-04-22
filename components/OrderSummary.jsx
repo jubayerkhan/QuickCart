@@ -1,9 +1,10 @@
 import { addressDummyData } from "@/assets/assets";
 import { useAppContext } from "@/context/AppContext";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 const OrderSummary = () => {
-  const { currency, router, getCartCount, getCartAmount, setCartItems } = useAppContext();
+  const { currency, router, cartCount, cartAmount, setCartItems } = useAppContext();
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -34,7 +35,7 @@ const OrderSummary = () => {
       return;
     }
 
-    if (getCartCount() === 0) {
+    if (cartCount === 0) {
       toast.error("Your cart is empty");
       return;
     }
@@ -59,7 +60,7 @@ const OrderSummary = () => {
         toast.error(data.message || "Failed to place order");
       }
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error(`Error: ${error.message}`);
     }
   };
 
@@ -193,10 +194,10 @@ const OrderSummary = () => {
 
         <div className="space-y-4">
           <div className="flex justify-between text-base font-medium">
-            <p className="uppercase text-gray-600">Items {getCartCount()}</p>
+            <p className="uppercase text-gray-600">Items {cartCount}</p>
             <p className="text-gray-800">
               {currency}
-              {getCartAmount()}
+              {cartAmount}
             </p>
           </div>
           <div className="flex justify-between">
@@ -207,14 +208,14 @@ const OrderSummary = () => {
             <p className="text-gray-600">Tax (2%)</p>
             <p className="font-medium text-gray-800">
               {currency}
-              {Math.floor(getCartAmount() * 0.02)}
+              {Math.floor(cartAmount * 0.02)}
             </p>
           </div>
           <div className="flex justify-between text-lg md:text-xl font-medium border-t pt-3">
             <p>Total</p>
             <p>
               {currency}
-              {getCartAmount() + Math.floor(getCartAmount() * 0.02)}
+              {cartAmount + Math.floor(cartAmount * 0.02)}
             </p>
           </div>
         </div>

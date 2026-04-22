@@ -1,191 +1,233 @@
 "use client";
-import { productsDummyData, userDummyData } from "@/assets/assets";
-import { useUser } from "@clerk/nextjs";
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import { useRouter } from "next/navigation";
-import { createContext, use, useContext, useEffect, useState } from "react";
+import { useUser, useAuth } from "@clerk/nextjs";
 import toast from "react-hot-toast";
-import { useAuth } from "@clerk/nextjs";
 
 export const AppContext = createContext();
 
-export const useAppContext = () => {
-  return useContext(AppContext);
-};
+export const useAppContext = () => useContext(AppContext);
 
-export const AppContextProvider = (props) => {
-  const currency = process.env.NEXT_PUBLIC_CURRENCY;
+export const AppContextProvider = ({ children }) => {
   const router = useRouter();
+  const currency = process.env.NEXT_PUBLIC_CURRENCY;
 
   const { user } = useUser();
-
-  const [products, setProducts] = useState([]);
-  const [userData, setUserData] = useState(false);
-  const [isSeller, setIsSeller] = useState(true);
-  const [cartItems, setCartItems] = useState({});
-  const [loading, setLoading] = useState(true);
+  const role = user?.publicMetadata?.role || "user";
   const { isSignedIn, isLoaded } = useAuth();
 
-  const fetchProductData = async () => {
+  const [products, setProducts] = useState([]);
+  const [cartItems, setCartItems] = useState({});
+  const [loading, setLoading] = useState(true);
+  const isSeller = role === "seller";
+
+  // ✅ PRODUCT MAP (O(1) lookup)
+  const productMap = useMemo(() => {
+    const map = {};
+    products.forEach((p) => {
+      map[p._id] = p;
+    });
+    return map;
+  }, [products]);
+
+  // =============================
+  // FETCH PRODUCTS
+  // =============================
+  const fetchProducts = useCallback(async () => {
     try {
-      const res = await fetch("/api/products");
+      const res = await fetch("/api/products?limit=1000"); // ← get all for context
       const data = await res.json();
 
       if (data.success) {
         setProducts(data.products);
       }
-    } catch (error) {
-      console.log(error);
+    } catch (err) {
+      console.error("Product fetch error:", err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchUserData = async () => {
-    setUserData(userDummyData);
-  };
+  // =============================
+  // FETCH CART
+  // =============================
+  const fetchCart = useCallback(async () => {
+    try {
+      const res = await fetch("/api/cart");
+      const data = await res.json();
 
-  const fetchCart = async () => {
-    const res = await fetch("/api/cart");
-    const data = await res.json();
+      const formatted = {};
+      data.cart?.items?.forEach((item) => {
+        formatted[item.productId] = item.quantity;
+      });
 
-    const formattedCart = {};
-
-    data.cart.items.forEach((item) => {
-      formattedCart[item.productId] = item.quantity;
-    });
-
-    setCartItems(formattedCart);
-  };
-
-  const addToCart = async (itemId) => {
-    let cartData = structuredClone(cartItems);
-
-    if (cartData[itemId]) {
-      cartData[itemId] += 1;
-    } else {
-      cartData[itemId] = 1;
+      setCartItems(formatted);
+    } catch (err) {
+      console.error("Cart fetch error:", err);
     }
+  }, []);
 
-    setCartItems(cartData);
-    toast.success("Item added to cart");
+  // =============================
+  // ADD TO CART
+  // =============================
+  const addToCart = useCallback(async (itemId) => {
+    setCartItems((prev) => ({
+      ...prev,
+      [itemId]: (prev[itemId] || 0) + 1,
+    }));
 
-    await fetch("/api/cart", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ productId: itemId }),
-    });
+    toast.success("Added to cart");
 
-    fetchCart();
-  };
-
-  const updateCartQuantity = async (itemId, quantity) => {
-    let cartData = structuredClone(cartItems);
-
-    if (quantity === 0) {
-      delete cartData[itemId];
-
-      // 🔥 DELETE from DB
+    try {
       await fetch("/api/cart", {
-        method: "DELETE",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ productId: itemId }),
       });
-    } else {
-      cartData[itemId] = quantity;
-
-      // 🔥 UPDATE in DB
-      await fetch("/api/cart", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          productId: itemId,
-          quantity,
-        }),
-      });
+    } catch (err) {
+      console.error(err);
     }
-
-    setCartItems(cartData);
-  };
-
-  const getCartCount = () => {
-    let totalCount = 0;
-    for (const items in cartItems) {
-      if (cartItems[items] > 0) {
-        totalCount += cartItems[items];
-      }
-    }
-    return totalCount;
-  };
-
-  const getCartAmount = () => {
-    let totalAmount = 0;
-    for (const items in cartItems) {
-      let itemInfo = products.find((product) => product._id === items);
-      if (!itemInfo) continue;
-      if (cartItems[items] > 0) {
-        totalAmount += itemInfo.offerPrice * cartItems[items];
-      }
-    }
-    return Math.floor(totalAmount * 100) / 100;
-  };
-
-  useEffect(() => {
-    fetchProductData();
   }, []);
 
-  useEffect(() => {
-    fetchUserData();
+  // =============================
+  // UPDATE CART
+  // =============================
+  const updateCartQuantity = useCallback(async (itemId, quantity) => {
+    setCartItems((prev) => {
+      const updated = { ...prev };
+
+      if (quantity <= 0) delete updated[itemId];
+      else updated[itemId] = quantity;
+
+      return updated;
+    });
+
+    try {
+      if (quantity <= 0) {
+        await fetch("/api/cart", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productId: itemId }),
+        });
+      } else {
+        await fetch("/api/cart", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ productId: itemId, quantity }),
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      fetch("/api/user", { method: "POST" });
+  // =============================
+  // DERIVED VALUES (OPTIMIZED)
+  // =============================
+  const cartCount = useMemo(() => {
+    return Object.values(cartItems).reduce((a, b) => a + b, 0);
+  }, [cartItems]);
+
+  const cartAmount = useMemo(() => {
+    let total = 0;
+
+    for (const id in cartItems) {
+      const product = productMap[id];
+      if (!product) continue;
+
+      total += product.offerPrice * cartItems[id];
     }
+
+    return Math.floor(total * 100) / 100;
+  }, [cartItems, productMap]);
+
+  // =============================
+  // FETCH USER ROLE
+  // =============================
+  const fetchUserRole = async () => {
+    try {
+      const res = await fetch("/api/user");
+      const data = await res.json();
+      console.log("role data:", data); // ← check this
+      if (data.success) {
+        setRole(data.user.role);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // =============================
+  // EFFECTS
+  // =============================
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    fetch("/api/user", { method: "POST" });
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+
+    fetchCart();
+  }, [isLoaded, isSignedIn, fetchCart]);
+
+  useEffect(() => {
+    if (!user) return;
+    fetchUserRole();
   }, [user]);
 
-  useEffect(() => {
-    if (!isLoaded && !isSignedIn) return;
-    fetchCart();
-  }, [isSignedIn, isLoaded]);
+  // =============================
+  // CONTEXT VALUE (MEMOIZED)
+  // =============================
+  const value = useMemo(
+    () => ({
+      user,
+      router,
+      currency,
+      loading,
+      role,
+      isSeller,
+      products,
+      productMap,
 
-  // to add item to cart, we need to save the cart in local storage, so that when user come back to the site, they can see their cart items
-  // useEffect(() => {
-  //   const saveCart = localStorage.getItem("cart");
+      cartItems,
+      cartCount,
+      cartAmount,
 
-  //   if (saveCart) {
-  //     setCartItems(JSON.parse(saveCart));
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   localStorage.setItem("cart", JSON.stringify(cartItems));
-  // }, [cartItems]);
-
-  const value = {
-    user,
-    currency,
-    router,
-    isSeller,
-    setIsSeller,
-    userData,
-    fetchUserData,
-    products,
-    fetchProductData,
-    cartItems,
-    setCartItems,
-    addToCart,
-    updateCartQuantity,
-    getCartCount,
-    getCartAmount,
-  };
-
-  return (
-    <AppContext.Provider value={value}>{props.children}</AppContext.Provider>
+      addToCart,
+      updateCartQuantity,
+    }),
+    [
+      user,
+      router,
+      currency,
+      loading,
+      products,
+      role,
+      isSeller,
+      productMap,
+      cartItems,
+      cartCount,
+      cartAmount,
+      addToCart,
+      updateCartQuantity,
+    ],
   );
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };

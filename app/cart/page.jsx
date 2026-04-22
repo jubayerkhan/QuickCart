@@ -13,7 +13,7 @@ const Cart = () => {
     cartItems,
     addToCart,
     updateCartQuantity,
-    getCartCount,
+    cartCount,
   } = useAppContext();
   // console.log(getCartCount());
   // console.log(cartItems);
@@ -41,7 +41,7 @@ const Cart = () => {
               Your <span className="font-medium text-orange-600">Cart</span>
             </p>
             <p className="text-lg md:text-xl text-gray-500/80">
-              {getCartCount()} Items
+              {cartCount} Items
             </p>
           </div>
           <div className="overflow-x-auto">

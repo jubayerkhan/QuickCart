@@ -2,6 +2,21 @@ import dbConnect from "@/config/db";
 import User from "@/models/User";
 import { auth, currentUser } from "@clerk/nextjs/server";
 
+export async function GET() {
+  try {
+    const { userId } = await auth();
+    if (!userId) return Response.json({ success: false, message: "Unauthorized" });
+
+    // Get role from Clerk publicMetadata (server side only)
+    const clerkUser = await clerkClient.users.getUser(userId);
+    const role = clerkUser.publicMetadata?.role || "user";
+
+    return Response.json({ success: true, user: { role } });
+  } catch (err) {
+    return Response.json({ success: false, message: err.message });
+  }
+}
+
 export async function POST() {
   try {
     await dbConnect();
@@ -38,9 +53,9 @@ export async function POST() {
       existingUser.role = role;
       await existingUser.save();
     }
-    console.log("Clerk role:", user?.publicMetadata?.role);
     return Response.json({ success: true, user: existingUser });
   } catch (error) {
     return Response.json({ success: false, message: error.message });
   }
 }
+
