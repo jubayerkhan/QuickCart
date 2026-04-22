@@ -3,7 +3,7 @@ import { useAppContext } from "@/context/AppContext";
 import React, { useEffect, useState } from "react";
 
 const OrderSummary = () => {
-  const { currency, router, getCartCount, getCartAmount } = useAppContext();
+  const { currency, router, getCartCount, getCartAmount, setCartItems } = useAppContext();
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -28,7 +28,40 @@ const OrderSummary = () => {
     setIsDropdownOpen(false);
   };
 
-  const createOrder = async () => {};
+  const createOrder = async () => {
+    if (!selectedAddress) {
+      toast.error("Please select a delivery address");
+      return;
+    }
+
+    if (getCartCount() === 0) {
+      toast.error("Your cart is empty");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          addressId: selectedAddress._id,
+          paymentMethod: "COD",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success("Order placed successfully!");
+        setCartItems({}); // clear cart in context
+        router.push(`/order-confirmation?id=${data.order._id}`);
+      } else {
+        toast.error(data.message || "Failed to place order");
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
+  };
 
   useEffect(() => {
     fetchUserAddresses();
