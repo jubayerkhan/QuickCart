@@ -37,23 +37,53 @@ export async function GET() {
 export async function PUT(req) {
   try {
     await dbConnect();
-    const { userId } = await auth();
-    if (!userId)
-      return Response.json({ success: false, message: "Unauthorized" });
 
     const { orderId, status } = await req.json();
 
-    const order = await Order.findByIdAndUpdate(
-      orderId,
-      { status },
-      { new: true },
-    );
+    // ✅ update object
+    const updateData = {
+      status,
+    };
 
-    if (!order)
-      return Response.json({ success: false, message: "Order not found" });
+    // ✅ payment auto change
+    if (status === "delivered") {
+      updateData.isPaid = true;
+    } else {
+      updateData.isPaid = false;
+    }
 
-    return Response.json({ success: true, order });
+    // ✅ update order
+    const order = await Order.findByIdAndUpdate(orderId, updateData, {
+      new: true,
+    });
+
+    return Response.json({
+      success: true,
+      order,
+    });
   } catch (error) {
-    return Response.json({ success: false, message: error.message });
+    return Response.json({
+      success: false,
+      message: error.message,
+    });
+  }
+}
+
+// delete order
+export async function DELETE(req) {
+  try {
+    await dbConnect();
+    const { orderId } = await req.json();
+
+    await Order.findByIdAndDelete(orderId);
+
+    return Response.json({
+      success: true,
+    });
+  } catch (error) {
+    return Response.json({
+      success: false,
+      message: error.message,
+    });
   }
 }

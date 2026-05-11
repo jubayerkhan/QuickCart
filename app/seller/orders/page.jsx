@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import React, { useEffect, useState } from "react";
 import { assets } from "@/assets/assets";
 import Image from "next/image";
@@ -6,11 +6,12 @@ import { useAppContext } from "@/context/AppContext";
 import Footer from "@/components/seller/Footer";
 import Loading from "@/components/Loading";
 import toast from "react-hot-toast";
+import { Bentham } from "next/font/google";
 
 const STATUS_COLORS = {
-  pending:   "bg-yellow-100 text-yellow-700 border-yellow-300",
+  pending: "bg-yellow-100 text-yellow-700 border-yellow-300",
   confirmed: "bg-blue-100 text-blue-700 border-blue-300",
-  shipped:   "bg-purple-100 text-purple-700 border-purple-300",
+  shipped: "bg-purple-100 text-purple-700 border-purple-300",
   delivered: "bg-green-100 text-green-700 border-green-300",
   cancelled: "bg-red-100 text-red-700 border-red-300",
 };
@@ -50,11 +51,48 @@ const Orders = () => {
         // update locally without refetching
         setOrders((prev) =>
           prev.map((order) =>
-            order._id === orderId ? { ...order, status } : order
-          )
+            order._id === orderId
+              ? {
+                  ...order,
+                  status,
+                  isPaid: status === "delivered",
+                }
+              : order,
+          ),
         );
       } else {
         toast.error("Failed to update status");
+      }
+    } catch (error) {
+      toast.error("Something went wrong");
+    }
+  };
+
+  const deleteOrder = async (orderId) => {
+    const confirmDelete = confirm(
+      "Are you sure you want to delete this order?",
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetch("/api/seller/orders", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ orderId }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success("Order deleted");
+
+        // remove locally
+        setOrders((prev) => prev.filter((order) => order._id !== orderId));
+      } else {
+        toast.error("Failed to delete");
       }
     } catch (error) {
       toast.error("Something went wrong");
@@ -79,7 +117,7 @@ const Orders = () => {
           {orders.length === 0 ? (
             <p className="text-gray-500 text-center py-20">No orders yet.</p>
           ) : (
-            <div className="max-w-4xl rounded-md">
+            <div className="max-w-7xl rounded-md">
               {orders.map((order) => (
                 <div
                   key={order._id}
@@ -95,7 +133,10 @@ const Orders = () => {
                     <div className="flex flex-col gap-2">
                       <span className="font-medium leading-snug">
                         {order.items
-                          .map((item) => `${item.product?.name ?? item.productId} x ${item.quantity}`)
+                          .map(
+                            (item) =>
+                              `${item.product?.name ?? item.productId} x ${item.quantity}`,
+                          )
                           .join(", ")}
                       </span>
                       <span className="text-gray-500">
@@ -116,7 +157,8 @@ const Orders = () => {
 
                   {/* Amount */}
                   <p className="font-medium my-auto text-gray-800">
-                    {currency}{order.totalAmount}
+                    {currency}
+                    {order.totalAmount}
                   </p>
 
                   {/* Meta */}
@@ -128,7 +170,9 @@ const Orders = () => {
                     <span>
                       Payment:{" "}
                       <span
-                        className={order.isPaid ? "text-green-600" : "text-red-500"}
+                        className={
+                          order.isPaid ? "text-green-600" : "text-red-500"
+                        }
                       >
                         {order.isPaid ? "Paid" : "Pending"}
                       </span>
@@ -153,6 +197,15 @@ const Orders = () => {
                       <option value="delivered">Delivered</option>
                       <option value="cancelled">Cancelled</option>
                     </select>
+                  </div>
+                  {/* Status */}
+                  <div className="ml-5">
+                    <button
+                      className="flex items-center gap-1 px-1.5 md:px-3.5 py-2 bg-orange-600 text-white rounded-md"
+                      onClick={() => deleteOrder(order._id)}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))}
