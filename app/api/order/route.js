@@ -9,7 +9,8 @@ export async function POST(req) {
   try {
     await dbConnect();
     const { userId } = await auth();
-    if (!userId) return Response.json({ success: false, message: "Unauthorized" });
+    if (!userId)
+      return Response.json({ success: false, message: "Unauthorized" });
 
     const { addressId, paymentMethod = "COD" } = await req.json();
 
@@ -20,7 +21,10 @@ export async function POST(req) {
 
     // Get address
     const Address = (await import("@/models/Address")).default;
-    const address = await Address.findOne({ _id: addressId, clerkUserId: userId });
+    const address = await Address.findOne({
+      _id: addressId,
+      clerkUserId: userId,
+    });
     if (!address)
       return Response.json({ success: false, message: "Address not found" });
 
@@ -32,7 +36,7 @@ export async function POST(req) {
       const product = await Product.findById(cartItem.productId);
       if (!product) continue;
       orderItems.push({
-        productId: cartItem.productId,
+        productId: product._id,
         quantity: cartItem.quantity,
         price: product.offerPrice,
       });
@@ -59,10 +63,7 @@ export async function POST(req) {
     });
 
     // Clear cart after order
-    await Cart.findOneAndUpdate(
-      { clerkUserId: userId },
-      { items: [] }
-    );
+    await Cart.findOneAndUpdate({ clerkUserId: userId }, { items: [] });
 
     return Response.json({ success: true, order });
   } catch (error) {
@@ -75,9 +76,14 @@ export async function GET() {
   try {
     await dbConnect();
     const { userId } = await auth();
-    if (!userId) return Response.json({ success: false, message: "Unauthorized" });
+    if (!userId)
+      return Response.json({ success: false, message: "Unauthorized" });
 
-    const orders = await Order.find({ clerkUserId: userId }).sort({ createdAt: -1 });
+    const orders = await Order.find({
+      clerkUserId: userId,
+    })
+      .populate("items.productId")
+      .sort({ createdAt: -1 });
     return Response.json({ success: true, orders });
   } catch (error) {
     return Response.json({ success: false, message: error.message });

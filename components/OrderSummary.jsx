@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 const OrderSummary = () => {
-  const { currency, router, cartCount, cartAmount, setCartItems } = useAppContext();
+  const { currency, clearCart, router, cartCount, cartAmount, setCartItems } =
+    useAppContext();
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
@@ -30,39 +31,49 @@ const OrderSummary = () => {
   };
 
   const createOrder = async () => {
-    if (!selectedAddress) {
-      toast.error("Please select a delivery address");
-      return;
-    }
+  if (!selectedAddress) {
+    toast.error("Please select a delivery address");
+    return;
+  }
 
-    if (cartCount === 0) {
-      toast.error("Your cart is empty");
-      return;
-    }
+  if (cartCount === 0) {
+    toast.error("Your cart is empty");
+    return;
+  }
 
-    try {
-      const res = await fetch("/api/order", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          addressId: selectedAddress._id,
-          paymentMethod: "COD",
-        }),
+  try {
+    const res = await fetch("/api/order", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        addressId: selectedAddress._id,
+        paymentMethod: "COD",
+      }),
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      toast.success("Order placed successfully!");
+
+      // ✅ clear frontend cart
+      setCartItems({});
+
+      // ✅ optional: clear cart in DB too
+      await fetch("/api/cart/clear", {
+        method: "DELETE",
       });
 
-      const data = await res.json();
-
-      if (data.success) {
-        toast.success("Order placed successfully!");
-        setCartItems({}); // clear cart in context
-        router.push(`/order-confirmation?id=${data.order._id}`);
-      } else {
-        toast.error(data.message || "Failed to place order");
-      }
-    } catch (error) {
-      toast.error(`Error: ${error.message}`);
+      router.push(`/order-confirmation?id=${data.order._id}`);
+    } else {
+      toast.error(data.message || "Failed to place order");
     }
-  };
+  } catch (error) {
+    toast.error(`Error: ${error.message}`);
+  }
+};
 
   useEffect(() => {
     fetchUserAddresses();

@@ -160,12 +160,26 @@ export const AppContextProvider = ({ children }) => {
       const data = await res.json();
       console.log("role data:", data); // ← check this
       if (data.success) {
-        setRole(data.user.role);
+        const [role, setRole] = useState("user");
       }
     } catch (err) {
       console.error(err);
     }
   };
+
+  // clear cart function
+
+  const clearCart = useCallback(async () => {
+    try {
+      await fetch("/api/cart/clear", {
+        method: "DELETE",
+      });
+
+      setCartItems({});
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
 
   // =============================
   // EFFECTS
@@ -204,6 +218,8 @@ export const AppContextProvider = ({ children }) => {
       isSeller,
       products,
       productMap,
+      clearCart,
+      setCartItems,
 
       cartItems,
       cartCount,
@@ -221,6 +237,8 @@ export const AppContextProvider = ({ children }) => {
       role,
       isSeller,
       productMap,
+      clearCart,
+      setCartItems,
       cartItems,
       cartCount,
       cartAmount,
