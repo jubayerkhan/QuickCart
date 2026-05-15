@@ -31,49 +31,49 @@ const OrderSummary = () => {
   };
 
   const createOrder = async () => {
-  if (!selectedAddress) {
-    toast.error("Please select a delivery address");
-    return;
-  }
+    if (!selectedAddress) {
+      toast.error("Please select a delivery address");
+      return;
+    }
 
-  if (cartCount === 0) {
-    toast.error("Your cart is empty");
-    return;
-  }
+    if (cartCount === 0) {
+      toast.error("Your cart is empty");
+      return;
+    }
 
-  try {
-    const res = await fetch("/api/order", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        addressId: selectedAddress._id,
-        paymentMethod: "COD",
-      }),
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-      toast.success("Order placed successfully!");
-
-      // ✅ clear frontend cart
-      setCartItems({});
-
-      // ✅ optional: clear cart in DB too
-      await fetch("/api/cart/clear", {
-        method: "DELETE",
+    try {
+      const res = await fetch("/api/order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          addressId: selectedAddress._id,
+          paymentMethod: "COD",
+        }),
       });
 
-      router.push(`/order-confirmation?id=${data.order._id}`);
-    } else {
-      toast.error(data.message || "Failed to place order");
+      const data = await res.json();
+
+      if (data.success) {
+        toast.success("Order placed successfully!");
+
+        // ✅ clear frontend cart
+        setCartItems({});
+
+        // ✅ optional: clear cart in DB too
+        await fetch("/api/cart/clear", {
+          method: "DELETE",
+        });
+
+        router.push(`/order-confirmation?id=${data.order._id}`);
+      } else {
+        toast.error(data.message || "Failed to place order");
+      }
+    } catch (error) {
+      toast.error(`Error: ${error.message}`);
     }
-  } catch (error) {
-    toast.error(`Error: ${error.message}`);
-  }
-};
+  };
 
   useEffect(() => {
     fetchUserAddresses();
