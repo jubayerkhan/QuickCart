@@ -1,20 +1,30 @@
 "use client";
+
 import ProductCard from "@/components/ProductCard";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useAppContext } from "@/context/AppContext";
 import { useEffect, useState } from "react";
 
+import { useRouter, useSearchParams } from "next/navigation";
+
 const AllProducts = () => {
-  // const { products } = useAppContext();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // ✅ get page from URL
+  const currentPage = Number(searchParams.get("page")) || 1;
+
   const [products, setProducts] = useState([]);
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+
   const limit = 10;
 
-  const fetchProducts = async (page) => {
+  const fetchProducts = async () => {
     try {
-      const res = await fetch(`/api/products?page=${page}&limit=${limit}`);
+      const res = await fetch(
+        `/api/products?page=${currentPage}&limit=${limit}`
+      );
+
       const data = await res.json();
 
       if (data.success) {
@@ -27,28 +37,36 @@ const AllProducts = () => {
   };
 
   useEffect(() => {
-    fetchProducts(page);
-  }, [page]);
+    fetchProducts();
+  }, [currentPage]);
+
+  // ✅ update URL
+  const changePage = (newPage) => {
+    router.push(`/all-products?page=${newPage}`);
+  };
 
   return (
     <>
       <Navbar />
+
       <div className="flex flex-col items-start px-6 md:px-16 lg:px-32">
         <div className="flex flex-col items-end pt-12">
           <p className="text-2xl font-medium">All products</p>
           <div className="w-16 h-0.5 bg-orange-600 rounded-full"></div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 flex-col items-center gap-6 mt-12 pb-14 w-full">
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-12 pb-14 w-full">
           {products.map((product) => (
             <ProductCard key={product._id} product={product} />
           ))}
         </div>
-        {/* ✅ Pagination */}
+
+        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex justify-center gap-2 mt-10 mx-auto">
+          <div className="flex justify-center gap-2 mt-10 mx-auto mb-10">
             <button
-              disabled={page === 1}
-              onClick={() => setPage(page - 1)}
+              disabled={currentPage === 1}
+              onClick={() => changePage(currentPage - 1)}
               className="px-4 py-2 border rounded disabled:opacity-50"
             >
               Prev
@@ -57,9 +75,11 @@ const AllProducts = () => {
             {[...Array(totalPages)].map((_, i) => (
               <button
                 key={i}
-                onClick={() => setPage(i + 1)}
+                onClick={() => changePage(i + 1)}
                 className={`px-4 py-2 border rounded ${
-                  page === i + 1 ? "bg-orange-500 text-white" : ""
+                  currentPage === i + 1
+                    ? "bg-orange-500 text-white"
+                    : ""
                 }`}
               >
                 {i + 1}
@@ -67,8 +87,8 @@ const AllProducts = () => {
             ))}
 
             <button
-              disabled={page === totalPages}
-              onClick={() => setPage(page + 1)}
+              disabled={currentPage === totalPages}
+              onClick={() => changePage(currentPage + 1)}
               className="px-4 py-2 border rounded disabled:opacity-50"
             >
               Next
@@ -76,6 +96,7 @@ const AllProducts = () => {
           </div>
         )}
       </div>
+
       <Footer />
     </>
   );

@@ -89,7 +89,7 @@ export async function PUT(req, { params }) {
 
       for (const file of files) {
         if (!file || typeof file === "string" || !file.arrayBuffer) continue;
-        
+
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 
